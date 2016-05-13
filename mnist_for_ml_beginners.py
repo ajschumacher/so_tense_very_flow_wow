@@ -236,3 +236,107 @@ print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}
 ## 0.9185
 
 # Huh! Have to totally sess.run everything. Wild! So DAG.
+
+
+# Okay! So...
+# Sessions are the only things that "really" have values,
+# and they have state,
+# while the DAG (defined computations) never do.
+# Cool.
+
+# So to summarize the contents of this tutorial
+# in a more imperative order:
+
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+
+import tensorflow as tf
+sess = tf.Session()
+sess.run(tf.initialize_all_variables())
+# Hmm! Can this be run first? Probably not...
+# so the imported `tf` is also managing state?
+x = tf.placeholder(tf.float32, [None, 784])
+W = tf.Variable(tf.zeros([784, 10]))
+b = tf.Variable(tf.zeros([10]))
+y = tf.nn.softmax(tf.matmul(x, W) + b)
+y_ = tf.placeholder(tf.float32, [None, 10])
+cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y),
+                                              reduction_indices=[1]))
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+for i in range(1000):
+    batch_xs, batch_ys = mnist.train.next_batch(100)
+    sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+# Yup! Gross! Fails at `sess.run`.
+# So in a sense, it was more imperative than I realized at first.
+# It's like we have one big global namespace for tf things. YUCK.
+
+sess.run(tf.initialize_all_variables())
+for i in range(1000):
+    batch_xs, batch_ys = mnist.train.next_batch(100)
+    sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+# works fine, as expected
+
+correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+print(sess.run(accuracy, feed_dict={x: mnist.test.images,
+                                    y_: mnist.test.labels}))
+
+# colah is so good: http://colah.github.io/posts/2015-09-Visual-Information/
+# sure enough, this is good too:
+# http://neuralnetworksanddeeplearning.com/chap3.html#softmax
+
+
+# oh hey, where is that tf namespace?
+# looks like there's `tf.variable_scope`, which is a related user-space tool...
+
+# okay so there's `_default_graph_stack`,
+# which doesn't have an imported name; see
+# https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/framework/ops.py
+# you can do
+
+g = tf.get_default_graph()
+g._collections
+## {'trainable_variables': [<tensorflow.python.ops.variables.Variable at 0x1175c72d0>,
+##   <tensorflow.python.ops.variables.Variable at 0x1090d9210>],
+##  'variables': [<tensorflow.python.ops.variables.Variable at 0x1175c72d0>,
+##   <tensorflow.python.ops.variables.Variable at 0x1090d9210>],
+##  ('__varscope',): [<tensorflow.python.ops.variable_scope.VariableScope at 0x117add850>]}
+
+# Ha! Found you!
+
+Where are constants though?
+
+# other fun thing:
+import inspect
+for line in inspect.getsourcelines(tf.constant)[0]: print line
+
+
+# constants!
+x = tf.constant(22)
+g = x.graph  # (same as tf.get_default_graph())
+op = g.get_operations()[-1]  # (same as x.op)
+op._node_def
+## name: "Const"
+## op: "Const"
+## attr {
+##   key: "dtype"
+##   value {
+##     type: DT_INT32
+##   }
+## }
+## attr {
+##   key: "value"
+##   value {
+##     tensor {
+##       dtype: DT_INT32
+##       tensor_shape {
+##       }
+##       int_val: 22
+##     }
+##   }
+## }
+
+
+# Okay! this is pretty cool!
