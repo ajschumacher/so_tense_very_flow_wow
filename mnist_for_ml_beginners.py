@@ -522,3 +522,242 @@ for i in range(300):
 ## 299 0.044994
 # again, better final result than Nielsen's,
 # but it shows the initial period of slow learning, as intended
+
+# ah! I wasn't using quadratic cost!
+# I was using linear cost!
+
+s.run(tf.initialize_all_variables())
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize((y - y_)**2)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 0.0775374
+# hmm; that's still not 0.20
+
+w = tf.Variable(0.6)
+b = tf.Variable(0.9)
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize((y - y_)**2)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 0.061003
+# hmmm; that's still not 0.09
+# but I think I have the loss right now
+
+
+# did I just get lucky that it didn't explode?
+s.run(tf.initialize_all_variables())
+print s.run(y)
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(y_ - y)
+print s.run(train_step)
+print s.run(y)
+print s.run(train_step)
+print s.run(y)
+print s.run(train_step)
+print s.run(y)
+## 0.836235
+# yup loss is going up!
+
+
+# wouldn't ReLU also deal with the vanishing gradient?
+x = tf.constant(2)
+y = tf.nn.relu(x)
+print s.run(y)
+## 2
+x = tf.constant(-2)
+y = tf.nn.relu(x)
+print s.run(y)
+## 0
+
+# this is fun!
+x = tf.constant(2.0)
+y = tf.nn.elu(x)
+print s.run(y)
+## 2.0
+x = tf.constant(-2.0)
+y = tf.nn.elu(x)
+print s.run(y)
+## -0.864665
+# that is, np.exp(-2) - 1
+
+# okay but I was going to see about learning...
+w = tf.Variable(2.0)
+b = tf.Variable(2.0)
+x = tf.constant(1.0)
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(tf.nn.relu(y - y_))
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+# fail
+## InvalidArgumentError: We only handle up to Tensor::dims() up to 8, not 0
+# hmm
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(tf.nn.relu(y - y_))
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+# okay now it works, great
+## 299 [ 0.04499401]
+# hmm; still seems to have a really slow initial learning phase
+# why?
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(tf.nn.relu(y - y_))
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 [ 0.00438028]
+# goes further, but still a pretty dull period at first
+# interesting!
+
+# hahaha no it's not; I put a relu _on top of_ the sigmoid!
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.nn.relu(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+## [ 4.]
+# well, that's not even close to 0 or 1... sort of breaking the example
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(y - y_)
+# back to linear loss? I guess?
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 0 [ 3.70000005]
+## 1 [ 3.4000001]
+## 2 [ 3.10000014]
+## 3 [ 2.80000019]
+## 4 [ 2.50000024]
+## 5 [ 2.20000029]
+## 6 [ 1.90000033]
+## 7 [ 1.60000038]
+## 8 [ 1.30000043]
+## 9 [ 1.00000048]
+## 10 [ 0.70000046]
+## 11 [ 0.40000045]
+## 12 [ 0.10000044]
+## 13 [ 0.]
+## 14 [ 0.]
+## 15 [ 0.]
+# hahahahaha that goes to zero like a rock!
+# of course it's relying on the rectifying to get the zero...
+print s.run(w)
+## array([-0.09999979], dtype=float32)
+# still though. fast!
+# might as well see PReLU too!
+# oh wait; no prelu, but there is elu!
+
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.nn.elu(w*x + b)
+s.run(tf.initialize_all_variables())
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(y - y_)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+
+# ah; shouldn't be using linear loss eh? negatives again and all
+# (really shouldn't have been doing earlier either)
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.nn.elu(w*x + b)
+s.run(tf.initialize_all_variables())
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize((y - y_)**2)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 0 [ 1.5999999]
+## 1 [ 0.63999993]
+## 2 [ 0.25599995]
+## 3 [ 0.10239998]
+## 4 [ 0.04095999]
+## 5 [ 0.01638399]
+## 6 [ 0.0065536]
+## 7 [ 0.00262144]
+## 8 [ 0.00104858]
+## 9 [ 0.00041943]
+## 10 [ 0.00016777]
+## 11 [  6.71088201e-05]
+print s.run(w)
+## [  1.25541306e-38]
+# goes fast and gets right to the right answer
+# cool!
+
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+cross_entropy = -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y)))
+train_step = tf.train.GradientDescentOptimizer(0.005).minimize(cross_entropy)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 [ 0.77958679]
+# crazy slow
+# did he square the cross entropy maybe?
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+cross_entropy = -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y)))
+train_step = tf.train.GradientDescentOptimizer(0.005).minimize(cross_entropy**2)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 [ 0.34772611]
+# still not getting comparable results
+# different learning rate?
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+s.run(tf.initialize_all_variables())
+print s.run(y)
+cross_entropy = -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y)))
+train_step = tf.train.GradientDescentOptimizer(0.05).minimize(cross_entropy)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 [ 0.04159812]
+# believable at this learning rate
+
+
+# replicable?
+import tensorflow as tf
+
+w = tf.Variable([2.0])
+b = tf.Variable([2.0])
+x = tf.constant([1.0])
+y = tf.sigmoid(w*x + b)
+y_ = tf.constant([0.0])
+cross_entropy = -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y)))
+s = tf.Session()
+s.run(tf.initialize_all_variables())
+train_step = tf.train.GradientDescentOptimizer(0.005).minimize(cross_entropy)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+
+# https://twitter.com/planarrowspace/status/731328349159755776
+# https://gist.github.com/ajschumacher/5ff2b4af868d52eca7acf7bba225c76d
