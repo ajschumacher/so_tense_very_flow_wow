@@ -340,3 +340,185 @@ op._node_def
 
 
 # Okay! this is pretty cool!
+
+# from https://www.tensorflow.org/versions/r0.8/tutorials/mnist/beginners/index.html
+# again, a useful quote:
+# > To do efficient numerical computing in Python, we typically use libraries like NumPy that do expensive operations such as matrix multiplication outside Python, using highly efficient code implemented in another language. Unfortunately, there can still be a lot of overhead from switching back to Python every operation. This overhead is especially bad if you want to run computations on GPUs or in a distributed manner, where there can be a high cost to transferring data.
+
+# > TensorFlow also does its heavy lifting outside python, but it takes things a step further to avoid this overhead. Instead of running a single expensive operation independently from Python, TensorFlow lets us describe a graph of interacting operations that run entirely outside Python. (Approaches like this can be seen in a few machine learning libraries.)
+
+# (the stuff) above was exploring how that looks in the python module
+
+
+# cool now let's try to run the toy single-node examples from
+# http://neuralnetworksanddeeplearning.com/chap3.html
+# in tensorflow!
+# ps the author:
+# http://michaelnielsen.org/
+# https://twitter.com/michael_nielsen
+
+tf.reset_default_graph()  # not necessary, but neat
+
+# Here's our neuron with just one input.
+# Initial values as set by Nielsen
+w = tf.Variable(0.6)
+b = tf.Variable(0.9)
+x = tf.constant(1.0)
+y_ = tf.constant(0.0)
+
+
+## In [171]: x.graph.get_operations()[0].name
+## Out[171]: u'Variable/initial_value'
+##
+## In [172]: x.graph.get_operations()[1].name
+## Out[172]: u'Variable'
+##
+## In [173]: x.graph.get_operations()[2].name
+## Out[173]: u'Variable/Assign'
+##
+## In [174]: x.graph.get_operations()[3].name
+## Out[174]: u'Variable/read'
+##
+## In [175]: x.graph.get_operations()[4].name
+## Out[175]: u'Variable_1/initial_value'
+##
+## In [176]: x.graph.get_operations()[5].name
+## Out[176]: u'Variable_1'
+##
+## In [177]: x.graph.get_operations()[6].name
+## Out[177]: u'Variable_1/Assign'
+##
+## In [178]: x.graph.get_operations()[7].name
+## Out[178]: u'Variable_1/read'
+##
+## In [179]: x.graph.get_operations()[8].name
+## Out[179]: u'Const'
+##
+## In [180]: x.graph.get_operations()[9].name
+## Out[180]: u'Const_1'
+
+y = tf.mul(w, x)
+
+# make a session...
+s = tf.Session()
+
+s.run(y)
+## ...
+## FailedPreconditionError: Attempting to use uninitialized value Variable
+## ...
+
+# gross! variables have to be initialized, okay okay
+
+s.run(tf.initialize_all_variables())
+s.run(y)
+## 0.60000002
+
+# oh haha that's not right...
+y = w*x + b
+s.run(y)
+## 1.5
+
+
+## In [216]: x.graph.get_operations()[-1].name
+## Out[216]: u'add'
+##
+## In [217]: x.graph.get_operations()[-2].name
+## Out[217]: u'mul'
+##
+## In [218]: x.graph.get_operations()[-3].name
+## Out[218]: u'init'
+
+# cool cool
+
+# ah but it's supposed to be a sigmoid...
+y = tf.sigmoid(y)  # don't do that for a demo, but it works
+s.run(y)
+## 0.81757444
+
+# ooh! I should use tensorboard!
+# https://www.tensorflow.org/versions/r0.8/how_tos/summaries_and_tensorboard/index.html
+
+loss = y - y_
+
+
+# Nielsen had a learning rate of 0.15
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(loss)
+
+# whoa - that adds a lot of stuff to the graph!
+
+## In [233]: x.graph.get_operations()[-1].name
+## Out[233]: u'GradientDescent'
+##
+## In [234]: x.graph.get_operations()[-2].name
+## Out[234]: u'GradientDescent/update_Variable_1/ApplyGradientDescent'
+##
+## In [235]: x.graph.get_operations()[-3].name
+## Out[235]: u'GradientDescent/update_Variable/ApplyGradientDescent'
+##
+## In [236]: x.graph.get_operations()[-4].name
+## Out[236]: u'GradientDescent/learning_rate'
+##
+## In [237]: x.graph.get_operations()[-5].name
+## Out[237]: u'gradients/mul_grad/tuple/control_dependency_1'
+##
+## In [238]: x.graph.get_operations()[-6].name
+## Out[238]: u'gradients/mul_grad/tuple/control_dependency'
+##
+## In [239]: len(x.graph.get_operations())
+## Out[239]: 62
+
+print s.run(y)
+## 0.817574
+
+print s.run(train_step)
+## None
+
+print s.run(y)
+## 0.810806
+
+# hey, it's working!
+
+
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 298 0.0132452
+## 299 0.013194
+# considerably better result than Nielsen's!
+# due to some internal difference in the gradient descent method?
+# maybe a different interpretation of learning rate?
+# it does seem to have roughly the same "curve" as shown,
+# though I'm not properly visualizing it here...
+# maybe if I instrument it and use tensorboard
+
+print s.run(w), s.run(b)
+## -2.30736 -2.00735
+# again, more extreme (tighter fit) than Nielsen's results
+
+
+# second one!
+# importantly, I'll have to redefine the computation,
+# not just make a new constant with a Python variable name 'b'
+
+b = tf.Variable(2.0)
+# oh! should evaluate y here!
+s.run(tf.initialize_all_variables())
+# evaluate y again...
+y = tf.sigmoid(w*x + b)
+# could start new session...
+s.run(y)
+## 0.93086159
+# huh; that isn't 0.98...
+# ah! weight AND bias!
+w = tf.Variable(2.0)
+s.run(tf.initialize_all_variables())
+y = tf.sigmoid(w*x + b)
+## 0.98201376
+# there we go
+train_step = tf.train.GradientDescentOptimizer(0.15).minimize(y - y_)
+for i in range(300):
+    s.run(train_step)
+    print i, s.run(y)
+## 299 0.044994
+# again, better final result than Nielsen's,
+# but it shows the initial period of slow learning, as intended
