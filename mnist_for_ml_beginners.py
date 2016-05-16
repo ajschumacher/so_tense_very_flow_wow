@@ -1,3 +1,6 @@
+# this tweet from Hadley about names and objects is pretty good:
+# https://twitter.com/hadleywickham/status/732288980549390336
+
 #$ python --version
 ## Python 2.7.11 :: Anaconda 4.0.0 (x86_64)
 
