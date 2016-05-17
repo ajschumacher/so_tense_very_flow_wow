@@ -424,7 +424,7 @@ for i in range(100):
 
 This works, but there are some problems. It's hard to understand a
 list of numbers. A graph would be better. And even with only one value
-to monitor, there's too much output to read We're likely to want to
+to monitor, there's too much output to read. We're likely to want to
 monitor many things. It would be nice to record everything in some
 organized way.
 
@@ -457,4 +457,44 @@ interactive plot at
 
 ![Output at each train step.](img/simple_stat.png)
 
-For this case the output is also the weight itself.
+
+### Exploring Activation Functions
+
+So far our neuron has been very simple, even as individual neurons go.
+In as much as it has an
+[activation function](https://en.wikipedia.org/wiki/Activation_function#Comparison_of_activation_functions),
+it's the identity function. It's a purely linear neuron, and these are
+not very interesting. We'll want to add some sort of nonlinearity, or
+it will be pretty pointless to make multi-layer networks.
+
+We're also using a quadratic loss, which is kind of dull.
+
+```python
+import tensorflow as tf
+
+x = tf.constant(1.0, name='input')
+w = tf.Variable(0.9, name='weight')
+y = tf.mul(w, x, name='output')
+y_summary = tf.scalar_summary('output', y)
+y_ = tf.constant(0.0, name='correct')
+loss = tf.pow(y - y_, 2, name='loss')
+train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+
+summary_writer = tf.train.SummaryWriter('log_stats_test/identity')
+sess.run(tf.initialize_all_variables())
+for i in range(100):
+   summary_str = sess.run(y_summary)
+   summary_writer.add_summary(summary_str, i)
+   sess.run(train_step)
+
+y = tf.sigmoid(tf.mul(w, x), name='output')
+y_summary = tf.scalar_summary('output', y)
+loss = tf.pow(y - y_, 2, name='loss')
+train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+summary_writer = tf.train.SummaryWriter('log_stats_test/sigmoid')
+sess.run(tf.initialize_all_variables())
+for i in range(100):
+   summary_str = sess.run(y_summary)
+   summary_writer.add_summary(summary_str, i)
+   sess.run(train_step)
+```
