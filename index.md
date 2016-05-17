@@ -107,7 +107,7 @@ TensorFlow to compute with will have to get into that graph. Let's
 start with our simple constant input value of one.
 
 ```python
-input_value = tf.constant(1)
+input_value = tf.constant(1.0)
 ```
 
 That constant now lives as a node, an operation, in the graph.
@@ -123,20 +123,20 @@ That constant now lives as a node, an operation, in the graph.
 ## attr {
 ##   key: "dtype"
 ##   value {
-##     type: DT_INT32
+##     type: DT_FLOAT
 ##   }
 ## }
 ## attr {
 ##   key: "value"
 ##   value {
 ##     tensor {
-##       dtype: DT_INT32
+##       dtype: DT_FLOAT
 ##       tensor_shape {
 ##       }
-##       int_val: 1
+##       float_val: 1.0
 ##     }
 ##   }
-}
+## }
 ```
 
 You can see a protocol buffer representation of our simple number one.
@@ -164,12 +164,12 @@ has an explanation:
 > Torch.
 
 This is true even for a single constant! If we inspect our
-`input_value`, we see it is a constant 32-bit integer tensor of no
+`input_value`, we see it is a constant 32-bit float tensor of no
 dimensions: just one number.
 
 ```python
 >>> input_value
-## <tf.Tensor 'Const:0' shape=() dtype=int32>
+## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
 Note that it _doesn't_ tell us what the number _is_! To evaluate
@@ -180,10 +180,98 @@ ask to evaluate `input_value`.
 ```python
 >>> sess = tf.Session()
 >>> sess.run(input_value)
-## 1
+## 1.0
 ```
 
 It feels a little strange to "run" a constant. But it isn't so
 different from evaluating an expression as usual in Python; it's just
 that TensorFlow is managing its own space of things - the computational
 graph - and it has its own method of evaluation.
+
+
+### The Simplest Neuron
+
+Let's add the correct output value to the graph for our system,
+bringing the graph to two operations total.
+
+```python
+>>> correct_output_value = tf.constant(0.0)
+>>> len(graph.get_operations())
+## 2
+```
+
+The neuron itself will be have just one parameter, or "weight". Often
+even these simple neurons will be given a bias term, but we'll leave
+that out.
+
+The neuron's weight isn't going to be a constant; we expect it to
+change in order to learn based on the "true" input (one) and output
+(zero) we use for training. The weight will be a TensorFlow variable.
+We'll give that variable a starting value of 0.9
+
+```python
+>>> weight = tf.Variable(0.9)
+```
+
+Now how many operations will be in the graph? You might expect it
+would be three now, but in fact adding a variable with an initial
+value adds four operations. We can check all the operation names:
+
+```python
+>>> for op in graph.get_operations(): print op.name
+## Const
+## Const_1
+## Variable/initial_value
+## Variable
+## Variable/Assign
+## Variable/read
+```
+
+We won't want to follow every operation individually for long, but it
+will be nice to see at least one thing that feels like a real
+computation.
+
+```python
+>>> product = weight * input_value
+```
+
+Now there are seven operations in the graph, and the last one is our
+multiplication.
+
+```python
+>>> op = graph.get_operations()[-1]
+>>> op.name
+## 'mul'
+>>> op.inputs
+## <tensorflow.python.framework.ops._InputList at 0x1185b2950>
+```
+
+We could track down the graph connections via that input list, but
+instead let's wait to see the TensorBoard graph visualization soon.
+
+How do we find out what the product is? We have to "run" the `product`
+operation. But that operation depends on variables, and we need to run
+a special initialization operation for the variables first. The
+`initialize_all_variables` function generates the appropriate
+operation, which can then be run.
+
+```python
+>>> init = tf.initialize_all_variables()
+>>> sess.run(init)
+```
+
+The `initialize_all_variables` function makes initializers for all the
+variables _in the current graph_, so if you added more variables you
+would want to run `initialize_all_variables` again; an old `init`
+wouldn't include the new variables.
+
+Now we're ready to run the `product` operation.
+
+```python
+>>> sess.run(product)
+## 0.89999998
+```
+
+Recall that's `0.9 * 1.0` with 32-bit floats, and 32-bit floats have a
+hard time with 0.9; that's as close as they can get.
+
