@@ -23,9 +23,11 @@ examples here won't solve industrial machine learning problems, but
 they'll help you understand the components underlying everything built
 with TensorFlow.
 
+### Pointing to the Graph
 
 
-![An object has no name.](an_object_has_no_name.jpg)
+
+![An object has no name.](img/an_object_has_no_name.jpg)
 
 https://twitter.com/hadleywickham/status/732288980549390336
 
