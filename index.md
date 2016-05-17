@@ -232,7 +232,7 @@ will be nice to see at least one thing that feels like a real
 computation.
 
 ```python
->>> product = weight * input_value
+>>> output = weight * input_value
 ```
 
 Now there are seven operations in the graph, and the last one is our
@@ -249,7 +249,7 @@ multiplication.
 We could track down the graph connections via that input list, but
 instead let's wait to see the TensorBoard graph visualization soon.
 
-How do we find out what the product is? We have to "run" the `product`
+How do we find out what the product is? We have to "run" the `output`
 operation. But that operation depends on variables, and we need to run
 a special initialization operation for the variables first. The
 `initialize_all_variables` function generates the appropriate
@@ -265,13 +265,59 @@ variables _in the current graph_, so if you added more variables you
 would want to run `initialize_all_variables` again; an old `init`
 wouldn't include the new variables.
 
-Now we're ready to run the `product` operation.
+Now we're ready to run the `output` operation.
 
 ```python
->>> sess.run(product)
+>>> sess.run(output)
 ## 0.89999998
 ```
 
 Recall that's `0.9 * 1.0` with 32-bit floats, and 32-bit floats have a
 hard time with 0.9; that's as close as they can get.
 
+
+### See Your Graph in TensorBoard
+
+The graph to this point is simple, but already it would be nice to see
+it represented in a diagram. We'll use TensorBoard to generate that
+diagram. TensorBoard reads the `name` that is stored inside each
+operation, quite distinct from Python variable names. This is a good
+time to start using these TensorFlow names and switch to more
+conventional Python variable names.
+
+```python
+import tensorflow as tf
+
+x = tf.constant(1.0, name='input')
+w = tf.Variable(0.9, name='weight')
+y = tf.mul(w, x, name='output')
+```
+
+TensorBoard works by looking at a directory of output created inside
+TensorFlow sessions. We can write this output with a `SummaryWriter`,
+and if we do nothing beside creating one, it will write the session's
+graph.
+
+The first argument when creating the `SummaryWriter` is a directory
+name, which will be created if it doesn't exist. Output will be go
+there.
+
+```python
+>>> sess = tf.Session()
+>>> summary_writer = tf.train.SummaryWriter('log_simple_graph', sess.graph)
+```
+
+Now, at the command line, we can start up TensorBoard.
+
+```bash
+tensorboard --logdir=log_simple_graph
+```
+
+TensorBoard runs as a local web app, on port 6006, which is "goog"
+upside-down. If you go to
+[localhost:6006/#graphs](http://localhost:6006/#graphs) you should see
+a diagram of the graph you created in TensorFlow.
+
+It should look something like this:
+
+![Simple graph.](img/simple_graph.png)
