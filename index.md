@@ -363,6 +363,9 @@ Why is it 1.8? Our loss is error squared, and the derivative of that
 is two times the error. Currently the system says 0.9 instead of 0, so
 the error is 0.9, and two times 0.9 is 1.8. It's working!
 
+For more complex systems, it will be very nice indeed that TensorFlow
+calculates and then applies these gradients for us automatically.
+
 Let's apply the gradient, finishing the backpropagation.
 
 ```
@@ -388,3 +391,66 @@ operation that calculates and applies the gradients.
 
 Running the training step many times, the weight and so the output
 value are very close to zero. The neuron has learned!
+
+
+### Training Diagnostics in TensorBoard
+
+We're may be interested in what's happening during training. Say we
+want to follow what our system is predicting after every training
+step. We could `print` from inside the training loop.
+
+```python
+import tensorflow as tf
+
+x = tf.constant(1.0, name='input')
+w = tf.Variable(0.9, name='weight')
+y = tf.mul(w, x, name='output')
+y_ = tf.constant(0.0, name='correct')
+loss = tf.pow(y - y_, 2, name='loss')
+train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+
+sess = tf.Session()
+sess.run(tf.initialize_all_variables())
+for i in range(100):
+    print('at step {}, y is {}'.format(i, sess.run(y)))
+    sess.run(train_step)
+## at step 0, y is 0.899999976158
+## at step 1, y is 0.810000002384
+## at step 2, y is 0.728999972343
+## at step 3, y is 0.656099975109
+## ...
+## at step 99, y is 2.65614053205e-05
+```
+
+This works, but there are some problems. It's hard to understand a
+list of numbers. A graph would be better. And even with only one value
+to monitor, there's too much output to read We're likely to want to
+monitor many things. It would be nice to record everything in some
+organized way.
+
+Luckily, the same system that we used earlier to visualize the graph
+also has mechanisms that are just what we need.
+
+We instrument our graph by adding operations that summarize its state.
+Here we'll create one that reports the current value of `y`, our
+neuron's current prediction.
+
+```python
+>>> y_summary = tf.scalar_summary('output', y)
+```
+
+When it's run, a summary returns a string of protocol buffer text
+which can be written to a log directory with a `SummaryWriter`.
+
+```python
+>>> summary_writer = tf.train.SummaryWriter('log_simple_stat', sess.graph)
+>>> sess.run(tf.initialize_all_variables())
+>>> for i in range(100):
+>>>    summary_str = sess.run(y_summary)
+>>>    summary_writer.add_summary(summary_str, i)
+>>>    sess.run(train_step)
+```
+
+Now after running `tensorboard --logdir=log_simple_stat`, you get an
+interactive plot at
+[localhost:6006/#events](http://localhost:6006/#events).
