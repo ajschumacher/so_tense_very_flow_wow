@@ -13,3 +13,9 @@ import tensorflow as tf
 tf.__version__
 ## '0.8.0'
 ```
+
+bag dag:
+https://twitter.com/planarrowspace/status/569963882900561921
+
+labels and objects:
+https://twitter.com/hadleywickham/status/732288980549390336
