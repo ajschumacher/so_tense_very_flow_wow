@@ -454,3 +454,7 @@ which can be written to a log directory with a `SummaryWriter`.
 Now after running `tensorboard --logdir=log_simple_stat`, you get an
 interactive plot at
 [localhost:6006/#events](http://localhost:6006/#events).
+
+![Output at each train step.](img/simple_stat.png)
+
+For this case the output is also the weight itself.
