@@ -22,19 +22,19 @@ problems, but they'll help you understand the components underlying
 everything built with TensorFlow, including whatever you build next!
 
 
-### Python Pointing to the Graph
+### Python Points to the Graph
 
 Let's connect the way TensorFlow manages computation with the usual
 way we use Python. First it's important to remember, to paraphrase
 [Hadley Wickham](https://twitter.com/hadleywickham/status/732288980549390336),
-"An object has no name."
+"an object has no name."
 
 ![An object has no name.](img/an_object_has_no_name.jpg)
 
 The variable names that you use in your Python code aren't what they
 represent; they're just pointing at objects. So when you say in Python
-that `x = []` and `y = x`, it isn't then just that `x` equals `y`; `x`
-_is_ `y`, in the sense that they both point at the same object.
+that `x = []` and `y = x`, it isn't just that `x` equals `y`; `x` _is_
+`y`, in the sense that they both point at the same object.
 
 ```python
 >>> x = []
@@ -54,7 +54,7 @@ your variable names and which object they refer to.
 When you enter a Python expression, for example at the interactive
 interpreter or REPL (Read Evaluate Print Loop), whatever is read is
 almost always evaluated right away. Python is eager to do what you
-tell it. So if I tell Python to `x.append(y)`, it does that append
+tell it. So if I tell Python to `x.append(y)`, it does that `append`
 right away, even if I never use `x` again. A lazier alternative would
 be to just remember that I said `x.append(y)`, and if I ever evaluate
 `x` at some point in the future, Python could do the append then. This
@@ -75,11 +75,9 @@ TensorFlow computation graph.
 
 ### The Simplest TensorFlow Graph
 
-We're going to build a single neuron and task it with learning a
-function that takes the input number one to the output number zero.
-(The setup is inspired by examples in Michael Nielsen's
-[Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/).)
-Let's import TensorFlow.
+Inspired by examples in Michael Nielsen's
+[Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/),
+we're going to start simple. Let's import TensorFlow.
 
 ```python
 >>> import tensorflow as tf
@@ -88,7 +86,7 @@ Let's import TensorFlow.
 Already, TensorFlow has started managing a lot of state for us. There
 is now an implicit default graph, for example. Internally the default
 graph lives in the `_default_graph_stack`, but we don't have access to
-that directly. We can however use `tf.get_default_graph()`.
+that directly. We can use `tf.get_default_graph()` though.
 
 ```python
 >>> graph = tf.get_default_graph()
@@ -104,10 +102,10 @@ what operations are in the graph by using `graph.get_operations()`.
 
 Currently, there isn't anything in the graph. Everything we want
 TensorFlow to compute with will have to get into that graph. Let's
-start with our simple constant input value of one.
+start with a simple constant input value of one.
 
 ```python
-input_value = tf.constant(1.0)
+input = tf.constant(1.0)
 ```
 
 That constant now lives as a node, an operation, in the graph.
@@ -163,23 +161,23 @@ has an explanation:
 > outside Python. This approach is similar to that used in Theano or
 > Torch.
 
-This is true even for a single constant! If we inspect our
-`input_value`, we see it is a constant 32-bit float tensor of no
-dimensions: just one number.
+This is true even for a single constant! If we inspect our `input`, we
+see it is a constant 32-bit float tensor of no dimensions: just one
+number.
 
 ```python
->>> input_value
+>>> input
 ## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
 Note that it _doesn't_ tell us what the number _is_! To evaluate
-`input_value` and get its numerical value out, we need to create a
-"session" where graph operations can be evaluated and then explicitly
-ask to evaluate `input_value`.
+`input` and get its numerical value out, we need to create a "session"
+where graph operations can be evaluated and then explicitly ask to
+evaluate `input`.
 
 ```python
 >>> sess = tf.Session()
->>> sess.run(input_value)
+>>> sess.run(input)
 ## 1.0
 ```
 
@@ -191,36 +189,26 @@ graph - and it has its own method of evaluation.
 
 ### The Simplest Neuron
 
-Let's add the correct output value to the graph for our system,
-bringing the graph to two operations total.
-
-```python
->>> correct_output_value = tf.constant(0.0)
->>> len(graph.get_operations())
-## 2
-```
-
 The neuron itself will be have just one parameter, or "weight". Often
-even these simple neurons will be given a bias term, but we'll leave
-that out.
+even these simple neurons will have an additional constant bias, but
+we'll leave that out.
 
 The neuron's weight isn't going to be a constant; we expect it to
-change in order to learn based on the "true" input (one) and output
-(zero) we use for training. The weight will be a TensorFlow variable.
-We'll give that variable a starting value of 0.9
+change in order to learn based on the "true" input and output we use
+for training. The weight will be a TensorFlow variable. We'll give
+that variable a starting value of 0.9
 
 ```python
 >>> weight = tf.Variable(0.9)
 ```
 
 Now how many operations will be in the graph? You might expect it
-would be three now, but in fact adding a variable with an initial
-value adds four operations. We can check all the operation names:
+would be two now, but in fact adding a variable with an initial value
+adds four operations. We can check all the operation names:
 
 ```python
 >>> for op in graph.get_operations(): print op.name
 ## Const
-## Const_1
 ## Variable/initial_value
 ## Variable
 ## Variable/Assign
@@ -232,7 +220,7 @@ will be nice to see at least one thing that feels like a real
 computation.
 
 ```python
->>> output = weight * input_value
+>>> output = weight * input
 ```
 
 Now there are seven operations in the graph, and the last one is our
@@ -321,3 +309,82 @@ a diagram of the graph you created in TensorFlow.
 It should look something like this:
 
 ![Simple graph.](img/simple_graph.png)
+
+
+### Making the Neuron Learn
+
+What is our neuron supposed to learn? We set up an input value of 1.0.
+Let's say the correct output value is 0. That is, we have a very
+simple training set of just one example with one feature, which has
+the value one, and one label, which is zero. We want the neuron to
+learn the function taking one to zero.
+
+Currently, the system takes the input one and returns 0.9, which is
+not correct. We'll call the level of incorrectness the "loss" and give
+our system the goal of minimizing the loss. If the loss can be
+negative then minimizing it is a bit silly, so let's make the loss the
+square of the difference between the current output and the desired
+output.
+
+```python
+```python
+import tensorflow as tf
+
+x = tf.constant(1.0, name='input')
+w = tf.Variable(0.9, name='weight')
+y = tf.mul(w, x, name='output')
+y_ = tf.constant(0.0, name='correct')
+loss = tf.pow(y - y_, 2, name='loss')
+```
+
+So far, nothing in the graph does any learning. For that, we need an
+optimizer. The optimizer takes a learning rate, which we'll set at
+0.05.
+
+```python
+>>> opt = tf.train.GradientDescentOptimizer(learning_rate=0.05)
+```
+
+The optimizer if remarkably clever. It can automatically work out and
+apply the appropriate gradients through a whole network, carrying out
+the backward step for learning.
+
+Let's see what the gradient looks like for our simple example.
+
+```python
+>>> grads_and_vars = opt.compute_gradients(loss)
+>>> sess = tf.Session()
+>>> sess.run(tf.initialize_all_variables())
+>>> sess.run(grads_and_vars[0][0])
+## 1.8
+```
+
+Why is it 1.8? Our loss is error squared, and the derivative of that
+is two times the error. Currently the system says 0.9 instead of 0, so
+the error is 0.9, and two times 0.9 is 1.8. It's working!
+
+Let's apply the gradient, finishing the backpropagation.
+
+```
+>>> sess.run(opt.apply_gradients(grads_and_vars))
+>>> sess.run(w)
+## 0.81
+```
+
+The weight decreased by 0.09 because the optimizer subtracted the
+gradient times the learning rate (1.8 * 0.05), pushing the weight in
+the right direction.
+
+Instead of hand-holding the optimizer like this, we can make one
+operation that calculates and applies the gradients.
+
+```python
+>>> train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+>>> for i in range(300):
+>>>     sess.run(train_step)
+>>> sess.run(y)
+## 1.5178819e-14
+```
+
+Running the training step many times, the weight and so the output
+value are very close to zero. The neuron has learned!
