@@ -115,8 +115,10 @@ for i in range(20000):
         print("step %d, training accuracy %g"%(i, train_accuracy))
     train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
+
 print("test accuracy %g"%accuracy.eval(feed_dict={
     x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+
 
 print start - time.time()
 
@@ -138,3 +140,7 @@ print start - time.time()
 ## -7755.13304281
 # ugh wrong order
 # about 129 minutes. two hours!
+
+# on a real machine with GPUs:
+## -122.849017143
+# two minutes! 60x speedup (63x)
