@@ -249,9 +249,9 @@ multiplication.
 ```
 
 This shows how the multiplication operation tracks where its inputs
-come from; they come from other operations in the graph. To understand
+come from: they come from other operations in the graph. To understand
 a whole graph, following references this way quickly becomes tedious
-for humans; TensorBoard graph visualization will be nicer.
+for humans. TensorBoard graph visualization will be nicer.
 
 How do we find out what the product is? We have to "run" the
 `output_value` operation. But that operation depends on a variable,
@@ -305,7 +305,6 @@ The first argument when creating the `SummaryWriter` is an output
 directory name, which will be created if it doesn't exist.
 
 ```python
->>> sess = tf.Session()
 >>> summary_writer = tf.train.SummaryWriter('log_simple_graph', sess.graph)
 ```
 
@@ -432,8 +431,8 @@ Luckily, the same system that we used earlier to visualize the graph
 also has just the mechanisms we need!
 
 We instrument the computation graph by adding operations that
-summarize its state. Here we'll create one that reports the current
-value of `y`, the neuron's current output.
+summarize its state. Here we'll create an operation that reports the
+current value of `y`, the neuron's current output.
 
 ```python
 >>> summary_y = tf.scalar_summary('output', y)
