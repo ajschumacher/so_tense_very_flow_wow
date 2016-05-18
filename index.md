@@ -51,7 +51,7 @@ identity, especially with mutable data structures like lists, can lead
 to surprising bugs when it's misunderstood.
 
 Internally, Python is managing all your objects and keeping track of
-your variable names and which object they refer to. TensorFlow adds
+your variable names and which objects they refer to. TensorFlow adds
 another analogous system.
 
 When you enter a Python expression, for example at the interactive
@@ -66,14 +66,13 @@ where defining relationships is entirely separate from evaluating what
 the results are.
 
 Recall that `foo` and `bar` refer to the same list. We've put a list
-inside itself, which Python will not try to print in its entirety. You
-could think of this structure as a graph with one node, pointing to
-itself. Nesting lists is one way to represent a graph structure like a
-TensorFlow computation graph.
+inside itself. You could think of this structure as a graph with one
+node, pointing to itself. Nesting lists is one way to represent a
+graph structure like a TensorFlow computation graph.
 
 ```python
->>> x.append(y)
->>> x
+>>> foo.append(bar)
+>>> foo
 ## [[...]]
 ```
 
@@ -111,8 +110,8 @@ what operations are in the graph with `graph.get_operations()`.
 ```
 
 Currently, there isn't anything in the graph. Everything we want
-TensorFlow to compute with will have to get into that graph. Let's
-start with a simple constant input value of one.
+TensorFlow to compute will have to get into that graph. Let's start
+with a simple constant input value of one.
 
 ```python
 input_value = tf.constant(1.0)
@@ -175,8 +174,10 @@ normal Python variable without also defining a TensorFlow object?
 
 TensorFlow can do a lot of great things, but it can only work with
 what's been explicitly given over to it. This is true even for a
-single constant! If we inspect our `input_value`, we see it is a
-constant 32-bit float tensor of no dimension: just one number.
+single constant!
+
+If we inspect our `input_value`, we see it is a constant 32-bit float
+tensor of no dimension: just one number.
 
 ```python
 >>> input_value
@@ -203,13 +204,13 @@ graph - and it has its own method of evaluation.
 ### The Simplest Neuron
 
 Let's build a "neuron" with just one parameter, or "weight". Often
-even these simple neurons also have an additional constant bias, but
-we'll leave that out.
+even these simple neurons also have a bias term, but we'll leave that
+out.
 
 The neuron's weight isn't going to be constant; we expect it to change
 in order to learn based on the "true" input and output we use for
 training. The weight will be a TensorFlow variable. We'll give that
-variable a starting value of 0.9
+variable a starting value of 0.9.
 
 ```python
 >>> weight = tf.Variable(0.9)
@@ -229,8 +230,7 @@ adds four operations. We can check all the operation names:
 ```
 
 We won't want to follow every operation individually for long, but it
-will be nice to see at least one thing that feels like a real
-computation.
+will be nice to see at least one that feels like a real computation.
 
 ```python
 >>> output_value = weight * input_value
@@ -278,7 +278,7 @@ Now we're ready to run the `output_value` operation.
 ```
 
 Recall that's `0.9 * 1.0` with 32-bit floats, and 32-bit floats have a
-hard time with 0.9; that's as close as they can get.
+hard time with 0.9; 0.89999998 is as close as they can get.
 
 
 ### See Your Graph in TensorBoard
@@ -298,8 +298,8 @@ names.
 
 TensorBoard works by looking at a directory of output created from
 TensorFlow sessions. We can write this output with a `SummaryWriter`,
-and if we do nothing beside creating one with a graph, it will write
-out that graph.
+and if we do nothing beside creating one with a graph, it will just
+write out that graph.
 
 The first argument when creating the `SummaryWriter` is an output
 directory name, which will be created if it doesn't exist.
@@ -328,7 +328,7 @@ like this:
 ### Making the Neuron Learn
 
 What is our neuron supposed to learn? We set up an input value of 1.0.
-Let's say the correct output value is 0. That is, we have a very
+Let's say the correct output value is zero. That is, we have a very
 simple "training set" of just one example with one feature, which has
 the value one, and one label, which is zero. We want the neuron to
 learn the function taking one to zero.
@@ -377,14 +377,14 @@ calculates and then applies these gradients for us automatically.
 
 Let's apply the gradient, finishing the backpropagation.
 
-```
+```python
 >>> sess.run(optim.apply_gradients(grads_and_vars))
 >>> sess.run(w)
 ## 0.81
 ```
 
 The weight decreased by 0.09 because the optimizer subtracted the
-gradient times the learning rate (1.8 * 0.05), pushing the weight in
+gradient times the learning rate, 1.8 * 0.05, pushing the weight in
 the right direction.
 
 Instead of hand-holding the optimizer like this, we can make one
@@ -394,6 +394,7 @@ operation that calculates and applies the gradients: the `train_step`.
 >>> train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
 >>> for i in range(50):
 >>>     sess.run(train_step)
+>>>
 >>> sess.run(y)
 ## 0.0046383981
 ```
@@ -405,7 +406,7 @@ value are now very close to zero. The neuron has learned!
 ### Training Diagnostics in TensorBoard
 
 We may be interested in what's happening during training. Say we want
-to follow what our system is predicting after every training step. We
+to follow what our system is predicting at every training step. We
 could `print` from inside the training loop.
 
 ```python
@@ -413,6 +414,7 @@ could `print` from inside the training loop.
 >>> for i in range(50):
 >>>     print('before step {}, y is {}'.format(i, sess.run(y)))
 >>>     sess.run(train_step)
+>>>
 ## before step 0, y is 0.899999976158
 ## before step 1, y is 0.810000002384
 ## ...
@@ -427,7 +429,7 @@ monitor many things. It would be nice to record everything in some
 organized way.
 
 Luckily, the same system that we used earlier to visualize the graph
-also has just the mechanisms we need.
+also has just the mechanisms we need!
 
 We instrument the computation graph by adding operations that
 summarize its state. Here we'll create one that reports the current
@@ -448,6 +450,7 @@ buffer text which can be written to a log directory with a
 >>>    summary_str = sess.run(summary_y)
 >>>    summary_writer.add_summary(summary_str, i)
 >>>    sess.run(train_step)
+>>>
 ```
 
 Now after running `tensorboard --logdir=log_simple_stat`, you get an
