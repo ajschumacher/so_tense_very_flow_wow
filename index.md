@@ -5,13 +5,14 @@ library for deep learning, yes. That affiliation, and its connection
 to Google, has helped TensorFlow attract a lot of attention. But
 TensorFlow is more than "just" deep learning. The core library is
 suited to a broad family of machine learning methods, and exposes a
-lot of the details. Then, the execution model is unfamiliar to those
-coming from, for example, Python's scikit-learn, or most tools in R.
-And in addition to the core machine learning functionality, TensorFlow
-also includes its own logging system, its own interactive log
-visualizer, and even its own heavily engineered serving architecture.
-Especially for someone hoping to explore machine learning for the
-first time with TensorFlow, it can be a lot to take in.
+lot of the details. There's linear algebra in there. Then, the
+execution model is unfamiliar to those coming from, for example,
+Python's scikit-learn, or most tools in R. And in addition to the core
+machine learning functionality, TensorFlow also includes its own
+logging system, its own interactive log visualizer, and even its own
+heavily engineered serving architecture. Especially for someone hoping
+to explore machine learning for the first time with TensorFlow, it can
+be a lot to take in.
 
 How does TensorFlow work? We're going to zoom in on one simplified
 neuron so that you can see every moving part. We'll explore the data
@@ -497,4 +498,36 @@ for i in range(100):
    summary_str = sess.run(y_summary)
    summary_writer.add_summary(summary_str, i)
    sess.run(train_step)
+```
+
+```python
+import tensorflow as tf
+
+x = tf.constant([1.0], name='input')
+w = tf.Variable([0.9], name='weight')
+y_ = tf.constant([0.0], name='correct')
+
+activations = {'identity': lambda y: y,
+               'sigmoid': tf.sigmoid,
+               'softmax': lambda y: tf.exp(y)/(tf.exp(y) + tf.exp(1 - y)),
+               'tanh': tf.nn.tanh,
+               'relu': tf.nn.relu,
+               'elu': tf.nn.elu}
+losses = {'quadratic': lambda y, y_: (y - y_)**2,
+          'xentropy': lambda y, y_: -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y))),}
+
+sess = tf.Session()
+for activation_name, activation_fun in activations.items():
+    for loss_name, loss_fun in losses.items():
+        print activation_name, loss_name
+        y = activation_fun(w * x)
+        y_summary = tf.scalar_summary('output', y[0])
+        loss = loss_fun(y, y_)
+        train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+        outdir = 'log_stats/{}_{}'.format(activation_name, loss_name)
+        summary_writer = tf.train.SummaryWriter(outdir)
+        sess.run(tf.initialize_all_variables())
+        for i in range(500):
+            summary_writer.add_summary(sess.run(y_summary), i)
+            sess.run(train_step)
 ```
