@@ -4,68 +4,73 @@ The TensorFlow project might be bigger than you realize. It's a
 library for deep learning, yes. That affiliation, and its connection
 to Google, has helped TensorFlow attract a lot of attention. But
 TensorFlow is more than "just" deep learning. The core library is
-suited to a broad family of machine learning methods, and exposes a
-lot of the details. There's linear algebra in there. Then, the
-execution model is unfamiliar to those coming from, for example,
-Python's scikit-learn, or most tools in R. And in addition to the core
-machine learning functionality, TensorFlow also includes its own
-logging system, its own interactive log visualizer, and even its own
-heavily engineered serving architecture. Especially for someone hoping
-to explore machine learning for the first time with TensorFlow, it can
-be a lot to take in.
+suited to a broad family of machine learning techniques. Linear
+algebra and some implementation details are prominently exposed. The
+execution model is unfamiliar to those coming from Python's
+scikit-learn or most tools in R. And in addition to the core machine
+learning functionality, TensorFlow also includes its own logging
+system, its own interactive log visualizer, and even its own heavily
+engineered serving architecture. Especially for someone hoping to
+explore machine learning for the first time with TensorFlow, it can be
+a lot to take in.
 
-How does TensorFlow work? We're going to zoom in on one simplified
-neuron so that you can see every moving part. We'll explore the data
-flow graph, and compare different activation functions. We'll see
-exactly how TensorBoard can visualize any aspect of your TensorFlow
-work. The examples here won't solve industrial machine learning
-problems, but they'll help you understand the components underlying
-everything built with TensorFlow, including whatever you build next!
+How does TensorFlow work? Let's examine things simple enough that we
+can see and understand every moving part. We'll explore the what, how,
+and why of the data flow graph. We'll see exactly how TensorBoard can
+visualize any aspect of your TensorFlow work. The examples here won't
+solve industrial machine learning problems, but they'll help you
+understand the components underlying everything built with TensorFlow,
+including whatever you build next!
 
 
 ### Python Points to the Graph
 
-Let's connect the way TensorFlow manages computation with the usual
-way we use Python. First it's important to remember, to paraphrase
-[Hadley Wickham](https://twitter.com/hadleywickham/status/732288980549390336),
-"an object has no name."
+The way TensorFlow manages computation is not totally different from
+the usual way we use Python. First it's important to remember, to
+paraphrase [Hadley Wickham][], that "an object has no name."
+
+[Hadley Wickham]: https://twitter.com/hadleywickham/status/732288980549390336
 
 ![An object has no name.](img/an_object_has_no_name.jpg)
 
-The variable names that you use in your Python code aren't what they
-represent; they're just pointing at objects. So when you say in Python
-that `x = []` and `y = x`, it isn't just that `x` equals `y`; `x` _is_
-`y`, in the sense that they both point at the same object.
+The variable names in Python code aren't what they represent; they're
+just pointing at objects. So when you say in Python that `foo = []`
+and `bar = foo`, it isn't just that `foo` equals `bar`; `foo` _is_
+`bar`, in the sense that they both point at the same list object.
 
 ```python
->>> x = []
->>> y = x
->>> x == y
+>>> foo = []
+>>> bar = foo
+>>> foo == bar
 ## True
->>> x is y
+>>> foo is bar
 ## True
 ```
 
-You can also see that `id(x)` and `id(y)` are the same. This identity,
-especially with mutable data structures like lists, can lead to
-surprising bugs for people who don't understand what Python is up to.
+You can also see that `id(foo)` and `id(bar)` are the same. This
+identity, especially with mutable data structures like lists, can lead
+to surprising bugs when it's misunderstood.
+
 Internally, Python is managing all your objects and keeping track of
-your variable names and which object they refer to.
+your variable names and which object they refer to. TensorFlow adds
+another analogous system.
 
 When you enter a Python expression, for example at the interactive
 interpreter or REPL (Read Evaluate Print Loop), whatever is read is
 almost always evaluated right away. Python is eager to do what you
-tell it. So if I tell Python to `x.append(y)`, it does that `append`
-right away, even if I never use `x` again. A lazier alternative would
-be to just remember that I said `x.append(y)`, and if I ever evaluate
-`x` at some point in the future, Python could do the append then. This
-would be closer to what we'll do with TensorFlow.
+tell it. So if I tell Python to `foo.append(bar)`, it does that
+`append` right away, even if I never use `foo` again. A lazier
+alternative would be to just remember that I said `foo.append(bar)`,
+and if I ever evaluate `foo` at some point in the future, Python could
+do the append then. This would be closer to how TensorFlow behaves,
+where defining relationships is entirely separate from evaluating what
+the results look like.
 
-Recall that `x` and `y` are the same list. We've put a list inside
-itself, which Python will not try to print in its entirety. You could
-think of this structure as a graph with one node, pointing to itself.
-Indeed, nesting lists is one way to represent a graph structure like a
-TensorFlow computation graph.
+Recall that `foo` and `bar` refer to the same list. We've put a list
+inside itself, which Python will not try to print in its entirety. You
+could think of this structure as a graph with one node, pointing to
+itself. Indeed, nesting lists is one way to represent a graph
+structure like a TensorFlow computation graph.
 
 ```python
 >>> x.append(y)
@@ -76,25 +81,30 @@ TensorFlow computation graph.
 
 ### The Simplest TensorFlow Graph
 
-Inspired by examples in Michael Nielsen's
-[Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/),
-we're going to start simple. Let's import TensorFlow.
+TensorFlow is admirably easier to [install][] than some other
+frameworks. The examples here work with either Python 2.7 or 3.3+. The
+TensorFlow version used is 0.8. Let's import TensorFlow.
+
+[install]: https://www.tensorflow.org/versions/r0.8/get_started/os_setup.html
 
 ```python
 >>> import tensorflow as tf
 ```
 
-Already, TensorFlow has started managing a lot of state for us. There
-is now an implicit default graph, for example. Internally the default
-graph lives in the `_default_graph_stack`, but we don't have access to
-that directly. We can use `tf.get_default_graph()` though.
+At this point TensorFlow has already started managing a lot of state
+for us. There is now an implicit default graph, for example.
+[Internally][] the default graph lives in the `_default_graph_stack`,
+but we don't have access to that directly. We use
+`tf.get_default_graph()`.
+
+[Internally]: https://github.com/tensorflow/tensorflow/blob/v0.8.0/tensorflow/python/framework/ops.py#L3399
 
 ```python
 >>> graph = tf.get_default_graph()
 ```
 
 The nodes of the TensorFlow graph are called "operations". We can see
-what operations are in the graph by using `graph.get_operations()`.
+what operations are in the graph with `graph.get_operations()`.
 
 ```python
 >>> graph.get_operations()
@@ -106,7 +116,7 @@ TensorFlow to compute with will have to get into that graph. Let's
 start with a simple constant input value of one.
 
 ```python
-input = tf.constant(1.0)
+input_value = tf.constant(1.0)
 ```
 
 That constant now lives as a node, an operation, in the graph.
@@ -115,8 +125,7 @@ That constant now lives as a node, an operation, in the graph.
 >>> operations = graph.get_operations()
 >>> operations
 ## [<tensorflow.python.framework.ops.Operation at 0x1185005d0>]
->>> input_value_op = operations[0]
->>> print(input_value_op)
+>>> print(operations[0])
 ## name: "Const"
 ## op: "Const"
 ## attr {
@@ -138,13 +147,14 @@ That constant now lives as a node, an operation, in the graph.
 ## }
 ```
 
-You can see a protocol buffer representation of our simple number one.
+You can see a protocol buffer text representation of the number one.
 
 People new to TensorFlow sometimes wonder why there's all this fuss
 about making "TensorFlow versions" of things. Why can't we just use a
-normal Python variable, like a NumPy array, without defining a
-TensorFlow thing? [One of the tutorials](https://www.tensorflow.org/versions/r0.8/tutorials/mnist/pros/index.html#deep-mnist-for-experts)
-has an explanation:
+normal Python variable without also defining a TensorFlow object?
+[One of the TensorFlow tutorials][] has an explanation:
+
+[One of the TensorFlow tutorials]: https://www.tensorflow.org/versions/r0.8/tutorials/mnist/pros/index.html#deep-mnist-for-experts
 
 > To do efficient numerical computing in Python, we typically use
 > libraries like NumPy that do expensive operations such as matrix
@@ -162,23 +172,24 @@ has an explanation:
 > outside Python. This approach is similar to that used in Theano or
 > Torch.
 
-This is true even for a single constant! If we inspect our `input`, we
-see it is a constant 32-bit float tensor of no dimensions: just one
-number.
+TensorFlow can do a lot of great things, but it can only work with
+what's been explicitly given over to it. This is true even for a
+single constant! If we inspect our `input_value`, we see it is a
+constant 32-bit float tensor of no dimension: just one number.
 
 ```python
->>> input
+>>> input_value
 ## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
-Note that it _doesn't_ tell us what the number _is_! To evaluate
-`input` and get its numerical value out, we need to create a "session"
-where graph operations can be evaluated and then explicitly ask to
-evaluate `input`.
+Note that this _doesn't_ tell us what that number _is_! To evaluate
+`input_value` and get its numerical value out, we need to create a
+"session" where graph operations can be evaluated and then explicitly
+ask to evaluate `input`.
 
 ```python
 >>> sess = tf.Session()
->>> sess.run(input)
+>>> sess.run(input_value)
 ## 1.0
 ```
 
@@ -190,8 +201,8 @@ graph - and it has its own method of evaluation.
 
 ### The Simplest Neuron
 
-The neuron itself will be have just one parameter, or "weight". Often
-even these simple neurons will have an additional constant bias, but
+Let's build a "neuron" with just one parameter, or "weight". Often
+even these simple neurons also have an additional constant bias, but
 we'll leave that out.
 
 The neuron's weight isn't going to be a constant; we expect it to
@@ -221,27 +232,31 @@ will be nice to see at least one thing that feels like a real
 computation.
 
 ```python
->>> output = weight * input
+>>> output_value = weight * input_value
 ```
 
-Now there are seven operations in the graph, and the last one is our
+Now there are six operations in the graph, and the last one is our
 multiplication.
 
 ```python
 >>> op = graph.get_operations()[-1]
 >>> op.name
 ## 'mul'
->>> op.inputs
-## <tensorflow.python.framework.ops._InputList at 0x1185b2950>
+>>> for input_op in op.inputs: print input_op
+## Tensor("Variable/read:0", shape=(), dtype=float32)
+## Tensor("Const:0", shape=(), dtype=float32)
 ```
 
-We could track down the graph connections via that input list, but
-instead let's wait to see the TensorBoard graph visualization soon.
+This shows how the multiplication operation tracks where its inputs
+come from; they come from other operations in the graph. To understand
+a whole graph, following references this way quickly becomes tedious
+for humans; TensorBoard graph visualization will be much nicer.
 
-How do we find out what the product is? We have to "run" the `output`
-operation. But that operation depends on variables, and we need to run
-a special initialization operation for the variables first. The
-`initialize_all_variables` function generates the appropriate
+How do we find out what the product is? We have to "run" the
+`output_value` operation. But that operation depends on a variable,
+`weight`. We told TensorFlow what the initial value of `weight` should
+be (0.9) but the value hasn't actually been set yet. The
+`tf.initialize_all_variables()` function generates the appropriate
 operation, which can then be run.
 
 ```python
@@ -249,15 +264,15 @@ operation, which can then be run.
 >>> sess.run(init)
 ```
 
-The `initialize_all_variables` function makes initializers for all the
-variables _in the current graph_, so if you added more variables you
-would want to run `initialize_all_variables` again; an old `init`
-wouldn't include the new variables.
+The `tf.initialize_all_variables()` function makes initializers for
+all the variables _in the current graph_, so if you added more
+variables you'll want to use `tf.initialize_all_variables()` again; an
+old `init` wouldn't include the new variables.
 
-Now we're ready to run the `output` operation.
+Now we're ready to run the `output_value` operation.
 
 ```python
->>> sess.run(output)
+>>> sess.run(output_value)
 ## 0.89999998
 ```
 
@@ -270,16 +285,14 @@ hard time with 0.9; that's as close as they can get.
 The graph to this point is simple, but already it would be nice to see
 it represented in a diagram. We'll use TensorBoard to generate that
 diagram. TensorBoard reads the `name` that is stored inside each
-operation, quite distinct from Python variable names. This is a good
-time to start using these TensorFlow names and switch to more
-conventional Python variable names.
+operation (quite distinct from Python variable names). We can use
+these TensorFlow names and switch to more conventional Python variable
+names.
 
 ```python
-import tensorflow as tf
-
-x = tf.constant(1.0, name='input')
-w = tf.Variable(0.9, name='weight')
-y = tf.mul(w, x, name='output')
+>>> x = tf.constant(1.0, name='input')
+>>> w = tf.Variable(0.9, name='weight')
+>>> y = tf.mul(w, x, name='output')
 ```
 
 TensorBoard works by looking at a directory of output created inside
@@ -299,15 +312,15 @@ there.
 Now, at the command line, we can start up TensorBoard.
 
 ```bash
-tensorboard --logdir=log_simple_graph
+$ tensorboard --logdir=log_simple_graph
 ```
 
-TensorBoard runs as a local web app, on port 6006, which is "goog"
-upside-down. If you go to
-[localhost:6006/#graphs](http://localhost:6006/#graphs) you should see
-a diagram of the graph you created in TensorFlow.
+TensorBoard runs as a local web app, on port 6006. ("6006" is "goog"
+upside-down.) If you go to [localhost:6006/#graphs][] you should see a
+diagram of the graph you created in TensorFlow. It should look
+something like this:
 
-It should look something like this:
+[localhost:6006/#graphs]: http://localhost:6006/#graphs
 
 ![Simple graph.](img/simple_graph.png)
 
@@ -316,7 +329,7 @@ It should look something like this:
 
 What is our neuron supposed to learn? We set up an input value of 1.0.
 Let's say the correct output value is 0. That is, we have a very
-simple training set of just one example with one feature, which has
+simple "training set" of just one example with one feature, which has
 the value one, and one label, which is zero. We want the neuron to
 learn the function taking one to zero.
 
@@ -328,22 +341,18 @@ square of the difference between the current output and the desired
 output.
 
 ```python
-```python
-import tensorflow as tf
-
-x = tf.constant(1.0, name='input')
-w = tf.Variable(0.9, name='weight')
-y = tf.mul(w, x, name='output')
-y_ = tf.constant(0.0, name='correct')
-loss = tf.pow(y - y_, 2, name='loss')
+>>> y_ = tf.constant(0.0)
+>>> loss = (y - y_)**2
 ```
 
 So far, nothing in the graph does any learning. For that, we need an
-optimizer. The optimizer takes a learning rate, which we'll set at
+optimizer. We'll use a gradient descent optimizer, which will update
+our weight based on the derivative of the loss. The optimizer takes a
+learning rate to moderate the size of the updates, which we'll set at
 0.05.
 
 ```python
->>> opt = tf.train.GradientDescentOptimizer(learning_rate=0.05)
+>>> optim = tf.train.GradientDescentOptimizer(learning_rate=0.05)
 ```
 
 The optimizer if remarkably clever. It can automatically work out and
@@ -353,7 +362,7 @@ the backward step for learning.
 Let's see what the gradient looks like for our simple example.
 
 ```python
->>> grads_and_vars = opt.compute_gradients(loss)
+>>> grads_and_vars = optim.compute_gradients(loss)
 >>> sess = tf.Session()
 >>> sess.run(tf.initialize_all_variables())
 >>> sess.run(grads_and_vars[0][0])
@@ -370,7 +379,7 @@ calculates and then applies these gradients for us automatically.
 Let's apply the gradient, finishing the backpropagation.
 
 ```
->>> sess.run(opt.apply_gradients(grads_and_vars))
+>>> sess.run(optim.apply_gradients(grads_and_vars))
 >>> sess.run(w)
 ## 0.81
 ```
@@ -384,43 +393,32 @@ operation that calculates and applies the gradients.
 
 ```python
 >>> train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
->>> for i in range(300):
+>>> for i in range(50):
 >>>     sess.run(train_step)
 >>> sess.run(y)
-## 1.5178819e-14
+## 0.0046383981
 ```
 
 Running the training step many times, the weight and so the output
-value are very close to zero. The neuron has learned!
+value are now very close to zero. The neuron has learned!
 
 
 ### Training Diagnostics in TensorBoard
 
-We're may be interested in what's happening during training. Say we
-want to follow what our system is predicting after every training
-step. We could `print` from inside the training loop.
+We may be interested in what's happening during training. Say we want
+to follow what our system is predicting after every training step. We
+could `print` from inside the training loop.
 
 ```python
-import tensorflow as tf
-
-x = tf.constant(1.0, name='input')
-w = tf.Variable(0.9, name='weight')
-y = tf.mul(w, x, name='output')
-y_ = tf.constant(0.0, name='correct')
-loss = tf.pow(y - y_, 2, name='loss')
-train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
-
-sess = tf.Session()
-sess.run(tf.initialize_all_variables())
-for i in range(100):
-    print('at step {}, y is {}'.format(i, sess.run(y)))
-    sess.run(train_step)
-## at step 0, y is 0.899999976158
-## at step 1, y is 0.810000002384
-## at step 2, y is 0.728999972343
-## at step 3, y is 0.656099975109
+>>> sess.run(tf.initialize_all_variables())
+>>> for i in range(50):
+>>>     print('before step {}, y is {}'.format(i, sess.run(y)))
+>>>     sess.run(train_step)
+## before step 0, y is 0.899999976158
+## before step 1, y is 0.810000002384
 ## ...
-## at step 99, y is 2.65614053205e-05
+## before step 48, y is 0.0057264175266
+## before step 49, y is 0.00515377568081
 ```
 
 This works, but there are some problems. It's hard to understand a
@@ -430,45 +428,40 @@ monitor many things. It would be nice to record everything in some
 organized way.
 
 Luckily, the same system that we used earlier to visualize the graph
-also has mechanisms that are just what we need.
+also has just the mechanisms we need.
 
 We instrument our graph by adding operations that summarize its state.
 Here we'll create one that reports the current value of `y`, our
 neuron's current prediction.
 
 ```python
->>> y_summary = tf.scalar_summary('output', y)
+>>> summary_y = tf.scalar_summary('output', y)
 ```
 
-When it's run, a summary returns a string of protocol buffer text
+When you run a summary it returns a string of protocol buffer text
 which can be written to a log directory with a `SummaryWriter`.
 
 ```python
->>> summary_writer = tf.train.SummaryWriter('log_simple_stat', sess.graph)
+>>> summary_writer = tf.train.SummaryWriter('log_simple_stat')
 >>> sess.run(tf.initialize_all_variables())
->>> for i in range(100):
->>>    summary_str = sess.run(y_summary)
+>>> for i in range(50):
+>>>    summary_str = sess.run(summary_y)
 >>>    summary_writer.add_summary(summary_str, i)
 >>>    sess.run(train_step)
 ```
 
 Now after running `tensorboard --logdir=log_simple_stat`, you get an
-interactive plot at
-[localhost:6006/#events](http://localhost:6006/#events).
+interactive plot at [localhost:6006/#events][].
+
+[localhost:6006/#events]: http://localhost:6006/#events
 
 ![Output at each train step.](img/simple_stat.png)
 
 
-### Exploring Activation Functions
+### Flowing Onward
 
-So far our neuron has been very simple, even as individual neurons go.
-In as much as it has an
-[activation function](https://en.wikipedia.org/wiki/Activation_function#Comparison_of_activation_functions),
-it's the identity function. It's a purely linear neuron, and these are
-not very interesting. We'll want to add some sort of nonlinearity, or
-it will be pretty pointless to make multi-layer networks.
-
-We're also using a quadratic loss, which is kind of dull.
+Here's a final version of the code. It's fairly minimal, with every
+part showing useful and understandable TensorFlow functionality.
 
 ```python
 import tensorflow as tf
@@ -476,58 +469,29 @@ import tensorflow as tf
 x = tf.constant(1.0, name='input')
 w = tf.Variable(0.9, name='weight')
 y = tf.mul(w, x, name='output')
-y_summary = tf.scalar_summary('output', y)
 y_ = tf.constant(0.0, name='correct')
 loss = tf.pow(y - y_, 2, name='loss')
 train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
 
-summary_writer = tf.train.SummaryWriter('log_stats_test/identity')
-sess.run(tf.initialize_all_variables())
-for i in range(100):
-   summary_str = sess.run(y_summary)
-   summary_writer.add_summary(summary_str, i)
-   sess.run(train_step)
-
-y = tf.sigmoid(tf.mul(w, x), name='output')
-y_summary = tf.scalar_summary('output', y)
-loss = tf.pow(y - y_, 2, name='loss')
-train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
-summary_writer = tf.train.SummaryWriter('log_stats_test/sigmoid')
-sess.run(tf.initialize_all_variables())
-for i in range(100):
-   summary_str = sess.run(y_summary)
-   summary_writer.add_summary(summary_str, i)
-   sess.run(train_step)
-```
-
-```python
-import tensorflow as tf
-
-x = tf.constant([1.0], name='input')
-w = tf.Variable([0.9], name='weight')
-y_ = tf.constant([0.0], name='correct')
-
-activations = {'identity': lambda y: y,
-               'sigmoid': tf.sigmoid,
-               'softmax': lambda y: tf.exp(y)/(tf.exp(y) + tf.exp(1 - y)),
-               'tanh': tf.nn.tanh,
-               'relu': tf.nn.relu,
-               'elu': tf.nn.elu}
-losses = {'quadratic': lambda y, y_: (y - y_)**2,
-          'xentropy': lambda y, y_: -1*(y_*tf.log(y) + (1-y_)*(tf.log(1-y))),}
+for value in [x, w, y, y_, loss]:
+    tf.scalar_summary(value.op.name, value)
+summaries = tf.merge_all_summaries()
 
 sess = tf.Session()
-for activation_name, activation_fun in activations.items():
-    for loss_name, loss_fun in losses.items():
-        print activation_name, loss_name
-        y = activation_fun(w * x)
-        y_summary = tf.scalar_summary('output', y[0])
-        loss = loss_fun(y, y_)
-        train_step = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
-        outdir = 'log_stats/{}_{}'.format(activation_name, loss_name)
-        summary_writer = tf.train.SummaryWriter(outdir)
-        sess.run(tf.initialize_all_variables())
-        for i in range(500):
-            summary_writer.add_summary(sess.run(y_summary), i)
-            sess.run(train_step)
+summary_writer = tf.train.SummaryWriter('log_simple_stats', sess.graph)
+
+sess.run(tf.initialize_all_variables())
+for i in range(50):
+   summary_writer.add_summary(sess.run(summaries), i)
+   sess.run(train_step)
 ```
+
+The example here is even simpler than the ones that inspired it in
+Michael Nielsen's [Neural Networks and Deep Learning][]. For myself,
+seeing the details of examples like these helps with understanding and
+building more complex systems that use and extend from simple building
+blocks. Part of the beauty of TensorFlow is how flexibly you can build
+complex systems from simpler components. I hope this exploration is
+helpful in your work with TensorFlow!
+
+[Neural Networks and Deep Learning]: http://neuralnetworksanddeeplearning.com/
