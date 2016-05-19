@@ -47,8 +47,10 @@ and `bar = foo`, it isn't just that `foo` equals `bar`; `foo` _is_
 ```
 
 You can also see that `id(foo)` and `id(bar)` are the same. This
-identity, especially with mutable data structures like lists, can lead
-to surprising bugs when it's misunderstood.
+identity, especially with [mutable][] data structures like lists, can
+lead to surprising bugs when it's misunderstood.
+
+[mutable]: https://codehabitude.com/2013/12/24/python-objects-mutable-vs-immutable/
 
 Internally, Python is managing all your objects and keeping track of
 your variable names and which objects they refer to. TensorFlow adds
@@ -125,7 +127,7 @@ operation, but we can also find the operation in the default graph.
 >>> operations = graph.get_operations()
 >>> operations
 ## [<tensorflow.python.framework.ops.Operation at 0x1185005d0>]
->>> print(operations[0])
+>>> operations[0].node_def
 ## name: "Const"
 ## op: "Const"
 ## attr {
@@ -147,7 +149,11 @@ operation, but we can also find the operation in the default graph.
 ## }
 ```
 
-That's a very nice protocol buffer text representation of the number one!
+TensorFlow uses a lot of [protocol buffers][] internally. Printing the
+`node_def` for the constant operation above shows what's in
+TensorFlow's protocol buffer representation for the number one!
+
+[protocol buffers]: https://developers.google.com/protocol-buffers/
 
 People new to TensorFlow sometimes wonder why there's all this fuss
 about making "TensorFlow versions" of things. Why can't we just use a
@@ -216,9 +222,9 @@ variable a starting value of 0.9.
 >>> weight = tf.Variable(0.9)
 ```
 
-Now how many operations will be in the graph? You might expect it
-would be two now, but in fact adding a variable with an initial value
-adds four operations. We can check all the operation names:
+You might expect that adding a variable would add one operation to the
+graph, but in fact that one line adds four operations. We can check
+all the operation names:
 
 ```python
 >>> for op in graph.get_operations(): print op.name
@@ -251,14 +257,15 @@ multiplication.
 This shows how the multiplication operation tracks where its inputs
 come from: they come from other operations in the graph. To understand
 a whole graph, following references this way quickly becomes tedious
-for humans. TensorBoard graph visualization will be nicer.
+for humans. TensorBoard graph visualization is designed to help.
 
 How do we find out what the product is? We have to "run" the
 `output_value` operation. But that operation depends on a variable,
 `weight`. We told TensorFlow that the initial value of `weight` should
-be 0.9, but the value hasn't actually been set yet. The
-`tf.initialize_all_variables()` function generates the appropriate
-operation, which can then be run.
+be 0.9, but there isn't yet an operation in the graph that will
+actually set that value, and the value hasn't yet been set yet in the
+current session. The `tf.initialize_all_variables()` function
+generates the appropriate operation, which can then be run.
 
 ```python
 >>> init = tf.initialize_all_variables()
@@ -267,8 +274,8 @@ operation, which can then be run.
 
 The `tf.initialize_all_variables()` function makes initializers for
 all the variables _in the current graph_, so if you added more
-variables you'll want to use `tf.initialize_all_variables()` again; an
-old `init` wouldn't include the new variables.
+variables you'll want to use `tf.initialize_all_variables()` again; a
+stale `init` wouldn't include the new variables.
 
 Now we're ready to run the `output_value` operation.
 
@@ -333,11 +340,11 @@ the value one, and one label, which is zero. We want the neuron to
 learn the function taking one to zero.
 
 Currently, the system takes the input one and returns 0.9, which is
-not correct. We'll call the level of incorrectness the "loss" and give
-our system the goal of minimizing the loss. If the loss can be
-negative then minimizing it could be silly, so let's make the loss the
-square of the difference between the current output and the desired
-output.
+not correct. We need a way to measure how wrong the system is. We'll
+call that measure of wrongness the "loss" and give our system the goal
+of minimizing the loss. If the loss can be negative then minimizing it
+could be silly, so let's make the loss the square of the difference
+between the current output and the desired output.
 
 ```python
 >>> y_ = tf.constant(0.0)
@@ -354,7 +361,7 @@ set at 0.05.
 >>> optim = tf.train.GradientDescentOptimizer(learning_rate=0.05)
 ```
 
-The optimizer if remarkably clever. It can automatically work out and
+The optimizer is remarkably clever. It can automatically work out and
 apply the appropriate gradients through a whole network, carrying out
 the backward step for learning.
 
