@@ -210,8 +210,7 @@ graph - and it has its own method of evaluation.
 ### The Simplest Neuron
 
 Let's build a "neuron" with just one parameter, or "weight". Often
-even these simple neurons also have a bias term, but we'll leave that
-out.
+even simple neurons also have a bias term, but we'll leave that out.
 
 The neuron's weight isn't going to be constant; we expect it to change
 in order to learn based on the "true" input and output we use for
