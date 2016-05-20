@@ -150,7 +150,7 @@ operation, but we can also find the operation in the default graph.
 ## }
 ```
 
-TensorFlow uses a lot of [protocol buffers][] internally. Printing the
+TensorFlow uses [protocol buffers][] internally. Printing the
 `node_def` for the constant operation above shows what's in
 TensorFlow's protocol buffer representation for the number one!
 
@@ -191,10 +191,7 @@ tensor of no dimension: just one number.
 ## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
-Note that this _doesn't_ tell us what that number _is_! To evaluate
-`input_value` and get its numerical value out, we need to create a
-"session" where graph operations can be evaluated and then explicitly
-ask to evaluate `input_value`.
+Note that this _doesn't_ tell us what that number _is_! To get the numerical value of `input_value`, we need to create a "session" to evaluate graph operations. Only then we can expliciatly ask to evaluate `input_value` and get its numerical value out. 
 
 ```python
 >>> sess = tf.Session()
@@ -202,7 +199,7 @@ ask to evaluate `input_value`.
 ## 1.0
 ```
 
-It feels a little strange to "run" a constant. But it isn't so
+It may feel a little strange to "run" a constant. But it isn't so
 different from evaluating an expression as usual in Python; it's just
 that TensorFlow is managing its own space of things - the computational
 graph - and it has its own method of evaluation.
