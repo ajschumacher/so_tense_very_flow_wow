@@ -1,18 +1,12 @@
 # TensorFlow from the Plumbing Up
 
-The TensorFlow project might be bigger than you realize. It's a
-library for deep learning, yes. That affiliation, and its connection
-to Google, has helped TensorFlow attract a lot of attention. But
-TensorFlow is more than "just" deep learning. The core library is
+
+TensorFlow has been dominating the trending page on [GitHub] (https://github.com/showcases/machine-learning) since Google open sourced it in March of 2016. It's popularity may be linked to it being the deep learning framework used at Google but it's actually not Just Another Deep Learning Framework. The core library is
 suited to a broad family of machine learning techniques. Linear
-algebra and other "internals" are prominently exposed. The execution
-model is unfamiliar to those coming from Python's scikit-learn, or
-most tools in R. And in addition to the core machine learning
-functionality, TensorFlow also includes its own logging system, its
-own interactive log visualizer, and even its own heavily engineered
-serving architecture. Especially for someone hoping to explore machine
-learning for the first time with TensorFlow, it can be a lot to take
-in.
+algebra and other "internals" are prominently exposed. In addition to the core machine learning functionality, TensorFlow also includes its own logging system, interactive log visualizer, and  heavily engineered serving architecture.
+
+The execution model may be unfamiliar to those coming from Python's scikit-learn, or
+most tools in R. For someone hoping to explore machine learning for the first time with TensorFlow, it can be a lot to take in.
 
 How does TensorFlow work? Let's break it down so that we can see and
 understand every moving part. We'll explore the data flow graph, how
