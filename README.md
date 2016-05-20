@@ -1,9 +1,10 @@
 # TensorFlow from the Plumbing Up
 
 
-TensorFlow has been dominating the trending page on [GitHub] (https://github.com/showcases/machine-learning) since Google open sourced it in March of 2016. It's popularity may be linked to it being the deep learning framework used at Google but it's actually not Just Another Deep Learning Framework. The core library is
-suited to a broad family of machine learning techniques. Linear
+TensorFlow has been dominating the trending page on [GitHub] since Google open sourced it in March of 2016. It's popularity may be linked to it being the deep learning framework used at Google but it's actually not Yet Another Deep Learning Framework. The core library is suited to a broad family of machine learning techniques. Linear
 algebra and other "internals" are prominently exposed. In addition to the core machine learning functionality, TensorFlow also includes its own logging system, interactive log visualizer, and  heavily engineered serving architecture.
+
+[GitHub]: https://github.com/showcases/machine-learning
 
 The execution model may be unfamiliar to those coming from Python's scikit-learn, or
 most tools in R. For someone hoping to explore machine learning for the first time with TensorFlow, it can be a lot to take in.
@@ -40,8 +41,18 @@ and `bar = foo`, it isn't just that `foo` equals `bar`; `foo` _is_
 ## True
 ```
 
-You can also see that `id(foo)` and `id(bar)` are the same. This
-identity, especially with [mutable][] data structures like lists, can
+In fact you can also see that [identity][] of `foo` and `bar` are the same.
+
+[identity]: https://docs.python.org/2/library/functions.html#id
+
+```python
+>>> id(foo)
+4438167496
+>>> id(bar)
+4438167496
+```
+
+This identity, especially with [mutable][] data structures like lists, can
 lead to surprising bugs when it's misunderstood.
 
 [mutable]: https://codehabitude.com/2013/12/24/python-objects-mutable-vs-immutable/
@@ -53,12 +64,8 @@ another analogous system.
 When you enter a Python expression, for example at the interactive
 interpreter or REPL (Read Evaluate Print Loop), whatever is read is
 almost always evaluated right away. Python is eager to do what you
-tell it. So if I tell Python to `foo.append(bar)`, it does that
-`append` right away, even if I never use `foo` again. A lazier
-alternative would be to just remember that I said `foo.append(bar)`,
-and if I ever evaluate `foo` at some point in the future, Python could
-do the append then. This would be closer to how TensorFlow behaves,
-where defining relationships is entirely separate from evaluating what
+tell it. So if I tell Python to `foo.append(bar)`, the `append` method is executed right away, even if `foo` is never used again. A lazier alternative would be to just remember that I said `foo.append(bar)`,
+and only execute the append if `foo` is evaluated at some point in the future. This would be closer to how TensorFlow behaves, where defining relationships is entirely separate from evaluating what
 the results are.
 
 Recall that `foo` and `bar` refer to the same list. We've put a list
