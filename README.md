@@ -212,8 +212,10 @@ even simple neurons also have a bias term, but we'll leave that out.
 
 The neuron's weight isn't going to be constant; we expect it to change
 in order to learn based on the "true" input and output we use for
-training. The weight will be a TensorFlow variable. We'll give that
+training. The weight will be a TensorFlow [Variable] []. We'll give that
 variable a starting value of 0.9.
+
+[Variable]: https://www.tensorflow.org/versions/r0.8/how_tos/variables/index.html
 
 ```python
 >>> weight = tf.Variable(0.9)
@@ -252,15 +254,15 @@ multiplication.
 ```
 
 This shows how the multiplication operation tracks where its inputs
-come from: they come from other operations in the graph. To understand
-a whole graph, following references this way quickly becomes tedious
-for humans. TensorBoard graph visualization is designed to help.
+come from: they come from other operations in the graph. Now imagine following references this way on a large graph. This quickly becomes tedious for humans but forunately the [TensorBoard Graph Visualization] [] is here to help.
+
+[TensorBoard Graph Visualization]: https://www.tensorflow.org/versions/r0.8/how_tos/graph_viz/index.html
 
 How do we find out what the product is? We have to "run" the
 `output_value` operation. But that operation depends on a variable,
 `weight`. We told TensorFlow that the initial value of `weight` should
-be 0.9, but there isn't yet an operation in the graph that will
-actually set that value, and the value hasn't yet been set yet in the
+be 0.9, but there isn't an operation in the graph that will
+actually set that value yet, and the value hasn't yet been set in the
 current session. The `tf.initialize_all_variables()` function
 generates the appropriate operation, which can then be run.
 
