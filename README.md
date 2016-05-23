@@ -59,11 +59,11 @@ another analogous system.
 When you enter a Python expression, for example at the interactive
 interpreter or REPL (Read Evaluate Print Loop), whatever is read is
 almost always evaluated right away. Python is eager to do what you
-tell it. So if I tell Python to `foo.append(bar)`, the `append` method
-is executed right away, even if `foo` is never used again. A lazier
-alternative would be to just remember that I said `foo.append(bar)`,
-and only execute the append if `foo` is evaluated at some point in the
-future. This would be closer to how TensorFlow behaves, where defining
+tell it. So if I tell Python to `foo.append(bar)`, it appends right
+away, even if I never use `foo` again. A lazier alternative would be
+to just remember that I said `foo.append(bar)`, and if I ever evaluate
+`foo` at some point in the future, Python could do the append then.
+This would be closer to how TensorFlow behaves, where defining
 relationships is entirely separate from evaluating what the results
 are.
 
