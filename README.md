@@ -1,13 +1,22 @@
 # TensorFlow from the Plumbing Up
 
 
-TensorFlow has been dominating the trending page on [GitHub] since Google open sourced it in March of 2016. It's popularity may be linked to it being the deep learning framework used at Google but it's actually not Yet Another Deep Learning Framework. The core library is suited to a broad family of machine learning techniques. Linear
-algebra and other "internals" are prominently exposed. In addition to the core machine learning functionality, TensorFlow also includes its own logging system, interactive log visualizer, and  heavily engineered serving architecture.
+TensorFlow has been dominating the trending page on [GitHub] since
+Google open sourced it in March of 2016. It's popularity may be linked
+to it being the deep learning framework used at Google but it's
+actually not Yet Another Deep Learning Framework. The core library is
+suited to a broad family of machine learning techniques. Linear
+algebra and other "internals" are prominently exposed. In addition to
+the core machine learning functionality, TensorFlow also includes its
+own logging system, interactive log visualizer, and heavily engineered
+serving architecture.
 
 [GitHub]: https://github.com/showcases/machine-learning
 
-The execution model may be unfamiliar to those coming from Python's scikit-learn, or
-most tools in R. For someone hoping to explore machine learning for the first time with TensorFlow, it can be a lot to take in.
+The execution model may be unfamiliar to those coming from Python's
+scikit-learn, or most tools in R. For someone hoping to explore
+machine learning for the first time with TensorFlow, it can be a lot
+to take in.
 
 How does TensorFlow work? Let's break it down so that we can see and
 understand every moving part. We'll explore the data flow graph, how
@@ -64,9 +73,13 @@ another analogous system.
 When you enter a Python expression, for example at the interactive
 interpreter or REPL (Read Evaluate Print Loop), whatever is read is
 almost always evaluated right away. Python is eager to do what you
-tell it. So if I tell Python to `foo.append(bar)`, the `append` method is executed right away, even if `foo` is never used again. A lazier alternative would be to just remember that I said `foo.append(bar)`,
-and only execute the append if `foo` is evaluated at some point in the future. This would be closer to how TensorFlow behaves, where defining relationships is entirely separate from evaluating what
-the results are.
+tell it. So if I tell Python to `foo.append(bar)`, the `append` method
+is executed right away, even if `foo` is never used again. A lazier
+alternative would be to just remember that I said `foo.append(bar)`,
+and only execute the append if `foo` is evaluated at some point in the
+future. This would be closer to how TensorFlow behaves, where defining
+relationships is entirely separate from evaluating what the results
+are.
 
 Recall that `foo` and `bar` refer to the same list. We've put a list
 inside itself. You could think of this structure as a graph with one
@@ -191,7 +204,10 @@ tensor of no dimension: just one number.
 ## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
-Note that this _doesn't_ tell us what that number _is_! To get the numerical value of `input_value`, we need to create a "session" to evaluate graph operations. Only then we can expliciatly ask to evaluate `input_value` and get its numerical value out. 
+Note that this _doesn't_ tell us what that number _is_! To get the
+numerical value of `input_value`, we need to create a "session" to
+evaluate graph operations. Only then we can expliciatly ask to
+evaluate `input_value` and get its numerical value out.
 
 ```python
 >>> sess = tf.Session()
@@ -254,7 +270,10 @@ multiplication.
 ```
 
 This shows how the multiplication operation tracks where its inputs
-come from: they come from other operations in the graph. Now imagine following references this way on a large graph. This quickly becomes tedious for humans but forunately the [TensorBoard Graph Visualization] [] is here to help.
+come from: they come from other operations in the graph. Now imagine
+following references this way on a large graph. This quickly becomes
+tedious for humans but forunately the
+[TensorBoard Graph Visualization] [] is here to help.
 
 [TensorBoard Graph Visualization]: https://www.tensorflow.org/versions/r0.8/how_tos/graph_viz/index.html
 
@@ -505,9 +524,9 @@ complex systems from simpler components.
 
 If you want to continue experimenting with TensorFlow, it might be fun
 to start making more interesting neurons, perhaps with different
-[activation functions][]. You could train with more [interesting][] [data][].
-You could add more neurons. You could add more layers. You could dive
-into more complex [pre-build models][]. Go for it!
+[activation functions][]. You could train with more [interesting][]
+[data][]. You could add more neurons. You could add more layers. You
+could dive into more complex [pre-build models][]. Go for it!
 
 [activation functions]: https://en.wikipedia.org/wiki/Activation_function#Comparison_of_activation_functions
 [interesting]: https://www.cs.utoronto.ca/~kriz/cifar.html
