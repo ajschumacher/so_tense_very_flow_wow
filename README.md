@@ -15,11 +15,14 @@ learning for the first time with TensorFlow, it can be a lot to take
 in.
 
 How does TensorFlow work? Let's break it down so that we can see and
-understand every moving part. We'll explore the data flow graph, how
-TensorFlow does learning, and how TensorBoard can visualize TensorFlow
-work. The examples here won't solve industrial machine learning
-problems, but they'll help you understand the components underlying
-everything built with TensorFlow, including whatever you build next!
+understand every moving part. We'll explore the data flow [graph][],
+how TensorFlow does learning, and how TensorBoard can visualize
+TensorFlow work. The examples here won't solve industrial machine
+learning problems, but they'll help you understand the components
+underlying everything built with TensorFlow, including whatever you
+build next!
+
+[graph]: https://en.wikipedia.org/wiki/Graph_(abstract_data_type)
 
 
 ### Python Points to the Graph
