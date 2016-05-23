@@ -509,11 +509,12 @@ complex systems from simpler components.
 
 If you want to continue experimenting with TensorFlow, it might be fun
 to start making more interesting neurons, perhaps with different
-[activation functions][]. You could train with more [interesting][]
-[data][]. You could add more neurons. You could add more layers. You
-could dive into more complex [pre-build models][]. Go for it!
+[activation functions][]. You could train with more interesting data.
+You could add more neurons. You could add more layers. You could dive
+into more complex [pre-build models][], or spend more time with
+TensorFlow's own [tutorials][] and [how-to guides][]. Go for it!
 
 [activation functions]: https://en.wikipedia.org/wiki/Activation_function#Comparison_of_activation_functions
-[interesting]: https://www.cs.utoronto.ca/~kriz/cifar.html
-[data]: http://yann.lecun.com/exdb/mnist/
 [pre-build models]: https://github.com/tensorflow/tensorflow/tree/master/tensorflow/models
+[tutorials]: https://www.tensorflow.org/versions/r0.8/tutorials/
+[how-to guides]: https://www.tensorflow.org/versions/r0.8/how_tos/
