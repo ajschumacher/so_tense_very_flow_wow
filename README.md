@@ -214,10 +214,10 @@ even simple neurons also have a bias term, but we'll leave that out.
 
 The neuron's weight isn't going to be constant; we expect it to change
 in order to learn based on the "true" input and output we use for
-training. The weight will be a TensorFlow [Variable] []. We'll give that
-variable a starting value of 0.9.
+training. The weight will be a TensorFlow [variable][]. We'll give
+that variable a starting value of 0.9.
 
-[Variable]: https://www.tensorflow.org/versions/r0.8/how_tos/variables/index.html
+[variable]: https://www.tensorflow.org/versions/r0.8/how_tos/variables/
 
 ```python
 >>> weight = tf.Variable(0.9)
