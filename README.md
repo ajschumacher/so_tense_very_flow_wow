@@ -301,7 +301,8 @@ it represented in a diagram. We'll use TensorBoard to generate that
 diagram. TensorBoard reads the `name` that is stored inside each
 operation (quite distinct from Python variable names). We can use
 these TensorFlow names and switch to more conventional Python variable
-names.
+names. Using `tf.mul` here is equivalent to our earlier use of just
+`*` for multiplication, but lets us set the `name` for the operation.
 
 ```python
 >>> x = tf.constant(1.0, name='input')
