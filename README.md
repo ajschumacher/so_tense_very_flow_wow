@@ -190,10 +190,10 @@ tensor of no dimension: just one number.
 ## <tf.Tensor 'Const:0' shape=() dtype=float32>
 ```
 
-Note that this _doesn't_ tell us what that number _is_! To get the
-numerical value of `input_value`, we need to create a "session" to
-evaluate graph operations. Only then we can expliciatly ask to
-evaluate `input_value` and get its numerical value out.
+Note that this _doesn't_ tell us what that number _is_! To evaluate
+`input_value` and get a numerical value out, we need to create a
+"session" where graph operations can be evaluated and then explicitly
+ask to evaluate or "run" `input_value`.
 
 ```python
 >>> sess = tf.Session()
