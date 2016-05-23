@@ -46,18 +46,8 @@ and `bar = foo`, it isn't just that `foo` equals `bar`; `foo` _is_
 ## True
 ```
 
-In fact you can also see that [identity][] of `foo` and `bar` are the same.
-
-[identity]: https://docs.python.org/2/library/functions.html#id
-
-```python
->>> id(foo)
-4438167496
->>> id(bar)
-4438167496
-```
-
-This identity, especially with [mutable][] data structures like lists, can
+You can also see that `id(foo)` and `id(bar)` are the same. This
+identity, especially with [mutable][] data structures like lists, can
 lead to surprising bugs when it's misunderstood.
 
 [mutable]: https://codehabitude.com/2013/12/24/python-objects-mutable-vs-immutable/
