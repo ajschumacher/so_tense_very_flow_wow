@@ -203,8 +203,8 @@ ask to evaluate or "run" `input_value`.
 
 It may feel a little strange to "run" a constant. But it isn't so
 different from evaluating an expression as usual in Python; it's just
-that TensorFlow is managing its own space of things - the computational
-graph - and it has its own method of evaluation.
+that TensorFlow is managing its own space of things - the
+computational graph - and it has its own method of evaluation.
 
 
 ### The Simplest Neuron
